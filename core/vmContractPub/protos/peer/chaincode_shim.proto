@@ -1,0 +1,220 @@
+/*
+	This file is part of go-palletone.
+	go-palletone is free software: you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation, either version 3 of the License, or
+	(at your option) any later version.
+	go-palletone is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+	You should have received a copy of the GNU General Public License
+	along with go-palletone.  If not, see <http://www.gnu.org/licenses/>.
+*/
+/*
+ * Copyright IBM Corp. All Rights Reserved.
+ * @author PalletOne core developers <dev@pallet.one>
+ * @date 2018
+ */
+
+syntax = "proto3";
+
+package protos;
+option java_package = "protos.peer";
+//option go_package = "protos/peer";
+option go_package = "github.com/palletone/go-palletone/core/vmContractPub/protos/peer";
+
+import "github.com/palletone/go-palletone/core/vmContractPub/protos/peer/chaincode_event.proto";
+import "github.com/palletone/go-palletone/core/vmContractPub/protos/peer/proposal.proto";
+import "google/protobuf/timestamp.proto";
+
+
+message ChaincodeMessage {
+
+    enum Type {
+        UNDEFINED = 0;
+        REGISTER = 1;
+        REGISTERED = 2;
+        INIT = 3;
+        READY = 4;
+        TRANSACTION = 5;
+        COMPLETED = 6;
+        ERROR = 7;
+        GET_STATE = 8;
+        PUT_STATE = 9;
+        DEL_STATE = 10;
+        INVOKE_CHAINCODE = 11;
+        RESPONSE = 13;
+        GET_STATE_BY_PREFIX=14;
+//        GET_QUERY_RESULT = 15;
+//        QUERY_STATE_NEXT = 16;
+//        QUERY_STATE_CLOSE = 17;
+        KEEPALIVE = 18;
+//        GET_HISTORY_FOR_KEY = 19;
+        GET_SYSTEM_CONFIG_REQUEST = 23;
+        GET_CONTRACT_ALL_STATE = 24;
+        GET_TOKEN_BALANCE=25;
+        PAY_OUT_TOKEN=26;
+        DEFINE_TOKEN=27;
+        SUPPLY_TOKEN=28;
+        GET_TIMESTAMP = 29;
+        SEND_JURY = 30;
+        RECV_JURY = 31;
+        GET_CERT_STATE = 32;
+        OUTCHAIN_CALL = 33;
+        GET_STABLE_TRANSACTION = 34;
+        GET_STABLE_UNIT = 35;
+    }
+
+    Type type = 1;
+    google.protobuf.Timestamp timestamp = 2;
+    bytes payload = 3;
+    string txid = 4;
+
+    SignedProposal proposal = 5;
+
+    //event emitted by chaincode. Used only with Init or Invoke.
+    // This event is then stored (currently)
+    //with Block.NonHashData.TransactionResult
+    ChaincodeEvent chaincode_event = 6;
+
+    //channel id
+    string channel_id = 7;
+    //contract id
+    bytes contract_id = 8;
+}
+
+// TODO: We need to finalize the design on chaincode container
+// compatibility upon upgrade, see FAB-5777.
+
+message GetState {
+    string key = 1;
+    string collection = 2;
+    bytes contractId=3;
+}
+message GetStateByPrefix {
+    string prefix = 1;
+    bytes contractId=2;
+}
+message GetTimestamp {
+    uint32 rangeNumber = 1;
+    string collection = 2;
+}
+message PutState {
+    string key = 1;
+    bytes value = 2;
+    string collection = 3;
+    bytes contractId=4;
+}
+
+message DelState {
+    string key = 1;
+    string collection = 2;
+    bytes contractId=3;
+}
+
+message GetStateByRange {
+    string startKey = 1;
+    string endKey = 2;
+    string collection = 3;
+}
+
+message GetQueryResult {
+    string query = 1;
+    string collection = 2;
+}
+
+message GetHistoryForKey {
+    string key = 1;
+}
+
+message QueryStateNext {
+    string id = 1;
+}
+
+message QueryStateClose {
+    string id = 1;
+}
+
+message QueryResultBytes {
+    bytes resultBytes = 1;
+}
+
+message QueryResponse {
+    repeated QueryResultBytes results = 1;
+    bool has_more = 2;
+    string id = 3;
+}
+
+message OutChainCall {
+    string OutChainName = 1;
+    string method = 2;
+    bytes params = 3;
+    string collection = 4;
+}
+
+message GetCertState {
+    string key = 1;
+    string collection = 2;
+}
+
+message SendJury {
+    uint32 msgType =1;
+    bytes consultContent = 2;
+    bytes myAnswer = 3;
+    string collection = 4;
+}
+message RecvJury {
+    uint32 msgType =1;
+    bytes consultContent = 2;
+    uint32 timeout =3;
+    string collection = 4;
+}
+
+message GetTokenBalance {
+    string address = 1;
+    string asset = 2;
+}
+
+message GetStableTransaction {
+    string txHash = 1;
+}
+
+message GetStableUnit {
+    string unitHash = 1;
+    uint64 unitNumber = 2;
+}
+
+message PayOutToken {
+    bytes asset = 1;
+    uint64 amount = 2;
+    uint32 locktime =3;
+    string address = 4;
+}
+message DefineToken{
+    int32 tokenType=1 ;
+    bytes define=2;
+    string creator = 3;
+}
+message SupplyToken{
+    bytes assetId=1;
+    bytes uniqueId=2;
+    uint64 amount=3;
+    string creator = 4;
+}
+message KeyForSystemConfig{
+    string key = 1;
+}
+message GetStateByPrefixKv {
+    string key = 1;
+    bytes resultBytes = 2;
+}
+
+// Interface that provides support to chaincode execution. ChaincodeContext
+// provides the context necessary for the server to respond appropriately.
+service ChaincodeSupport {
+
+    rpc Register(stream ChaincodeMessage) returns (stream ChaincodeMessage) {}
+
+
+}

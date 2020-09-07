@@ -1,0 +1,57 @@
+*** Keywords ***
+normalCrtTrans
+    [Arguments]    ${senderAddr}    ${recieverAddr}    ${senderPTN}    ${Poundage}
+    ${jsonRes}    Request create transaction    ${senderAddr}    ${recieverAddr}    ${senderPTN}    ${Poundage}
+    ${ret}    Should Match Regexp    ${jsonRes['result']}    ${commonResultCode}    msg="result:does't match Result expression"
+    [Return]    ${jsonRes['result']}
+
+normalSignTrans
+    [Arguments]    ${crtRet}    ${signType}    ${pwd}
+    ${resp}    Request sign transaction    ${crtRet}    ${signType}    ${pwd}
+    ${hex}    Should Match Regexp    ${resp['hex']}    ${result_hex}    msg="hex:does't match Result expression"
+    ${txid}    Should Match Regexp    ${resp['txid']}    ${result_txid}    msg="txid:does't match Result expression"
+    [Return]    ${hex}
+
+normalSendTrans
+    [Arguments]    ${hex}
+    ${resp}    Request send transaction    ${hex}
+    ${ret}    Should Match Regexp    ${resp['result']}    ${sendResult}    msg="result:does't match Result expression"
+    [Return]    ${ret}
+
+normalCcinvokePass
+    [Arguments]    ${commonResultCode}    ${senderAdd}    ${recieverAdd}    ${PTNAmount}    ${PTNPoundage}    ${ContractId}
+    ...    ${ccList}
+    ${resp}    Request CcinvokePass    ${commonResultCode}    ${senderAdd}    ${recieverAdd}    ${PTNAmount}    ${PTNPoundage}
+    ...    ${ContractId}    ${ccList}
+    #Should Contain    ${jsonRes['jsonrpc']}    2.0    msg="jsonrpc:failed"
+    #Should Contain    str(${jsonRes['id']})    1    msg="id:failed"
+    ${ret}    Should Match Regexp    ${resp['result']}    ${commonResultCode}    msg="result:does't match Result expression"
+    [Return]    ${ret}
+
+normalTransferToken
+    [Arguments]    ${result_code}
+    ${resultCrt}    Given I_set_TransferToken_params_to_Normal    ${preTokenId}
+    [Return]    ${resultCrt}
+
+normalGetTxByReqId
+    [Arguments]    ${result_code}
+    ${resultCrt}    Given I_set_GetTxByReqId_params_to_Normal    ${tokenId}
+    [Return]    ${resultCrt}
+
+normalGetBalance
+    [Arguments]    ${address}    ${host}=${host}
+    ${PTN}    ${RESULT}    Request getBalance    ${address}    ${host}
+    #Should Match Regexp    ${RESULT}    result    msg="TotalSupply:does't match"
+    [Return]    ${PTN}    ${RESULT}
+
+normalCcqueryById
+    [Arguments]    ${contractId}    ${methodType}    ${preTokenId}
+    ${resp}    Request Ccquery    ${contractId}    ${methodType}    ${preTokenId}
+    [Return]    ${resp['result']}
+
+normalVoteTransfer
+    [Arguments]    ${result_code}    ${tokenId}    ${tokenDecimal}    ${tokenAmount}    ${amount}    ${poundage}
+    ${ret}    Given I_set_CcinvokePass_params_to_Normal    ${tokenId}    ${tokenDecimal}    ${tokenAmount}    ${amount}    ${poundage}
+    ${resp}    When I_post_a_CcinvokePass_request    ${ret}
+    ${resultCrt}    Then I_get_a_CcinvokePass_result    ${resp}    ${result_code}
+    [Return]    ${resultCrt}
